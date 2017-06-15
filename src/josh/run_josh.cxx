@@ -1,4 +1,4 @@
-#include "run_pythia.h"
+#include "run_josh.h"
 
 #include <util/pyargs.h>
 #include <util/pyutil.h>
@@ -17,7 +17,7 @@
 
 using namespace std;
 
-int run_pythia (const std::string &s)
+int run_josh (const std::string &s)
 {
         // test(s); return;
         PyUtil::Args args(s);
@@ -28,7 +28,7 @@ int run_pythia (const std::string &s)
         string outfname = args.get("--output");
         if (outfname.size() < 1)
         {
-        	outfname = "default_output.root";
+            outfname = "default_output.root";
         }
         TFile *fout = TFile::Open(outfname.c_str(), "RECREATE");
         fout->cd();
@@ -65,11 +65,11 @@ int run_pythia (const std::string &s)
         TH1F *etaHighpT = new TH1F("etaHighpT", " ; eta;counts", 100,-3,3);
 
         // initialize pythia with a config and command line args
-		Pythia8::Pythia *ppythia = PyUtil::make_pythia(args.asString());
-		Pythia8::Pythia &pythia  = *ppythia;
-		auto &event              = pythia.event;
+        Pythia8::Pythia *ppythia = PyUtil::make_pythia(args.asString());
+        Pythia8::Pythia &pythia  = *ppythia;
+        auto &event              = pythia.event;
 
-		// this is where the event loop section starts
+        // this is where the event loop section starts
         auto nEv = args.getI("Main:numberOfEvents");
         LoopUtil::TPbar pbar(nEv);
 
@@ -77,7 +77,7 @@ int run_pythia (const std::string &s)
 
         for (unsigned int iE = 0; iE < nEv; iE++)//loopin over events  (pp collision)
         {
-        	pbar.Update();
+            pbar.Update();
             if (pythia.next() == false) continue;
 
             float v5pT = event[5].pT();
@@ -105,7 +105,7 @@ int run_pythia (const std::string &s)
                 {
                     //we can keep these particles
                     eta2pT->Fill(event[ip].pT(), event[ip].eta());
-
+                    if (std::abs(event[ip].pT()) <= 30 && std::abs(event[ip].pT()) >= 20) etaMedpT->Fill(event[ip].eta());
                  }
 
                   /*  
