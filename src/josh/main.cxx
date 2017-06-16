@@ -1,6 +1,7 @@
 #include <util/args.h>
 #include "run_josh.h"
 #include "run_cal.h"
+#include "run_dog.h"
 
 int main ( int argc, char *argv[] )
 {
@@ -16,6 +17,11 @@ int main ( int argc, char *argv[] )
     if (args.isSet("--cal"))
     {
     	rv = run_cal(args.asString());
+    }
+
+    if (args.isSet("--dog"))
+    {
+    	rv = run_dog(args.asString());
     }
 
     return rv;
