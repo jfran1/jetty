@@ -5,6 +5,7 @@
 #include <util/looputil.h>
 
 #include <Pythia8/Pythia.h>
+#include </global/homes/j/jfran/test/pythia8226/include/Pythia8/SigmaTotal.h>
 
 #include <TFile.h>
 #include <TH1F.h>
@@ -36,6 +37,9 @@ int run_dog (const std::string &s)
 
         TH1F *hpT = new TH1F("hpT", "p_{T} Final state;p_{T} [GeV] ; Counts", 50, 0, 220);
         
+        TH1F *norm1 = new TH1F("norm1", "norm pT; p_{T}; d#sigma/dp_{T}", 1000, 0, 3);
+        TH1F *norm2 = new TH1F("norm2", "norm pT; p_{T}; d#sigma/(dp_{T} * #bins)", 1000, 0, 3);
+
         // initialize pythia with a config and command line args
         Pythia8::Pythia *ppythia = PyUtil::make_pythia(args.asString());
         Pythia8::Pythia &pythia  = *ppythia;
@@ -51,16 +55,21 @@ int run_dog (const std::string &s)
         {
             pbar.Update();
             if (pythia.next() == false) continue;
-	 
+
             //loop over particles in the event
             for (unsigned int ip = 0; ip < event.size(); ip++)//looping over particles
             {  
-
+                //cout << "Cross section: " << pythia.info.sigmaGen() << endl;
                 //Filter for |eta| < 3 and outgoing partons
                 if ((std::abs(event[ip].eta()) < 3) && event[ip].isFinal())  
                 {
-                  hpT->Fill(event[ip].pT());
+
+                    hpT->Fill(event[ip].pT());
+                    norm1->Fill(event[ip].pT()); 
+                    norm2->Fill(event[ip].pT());
                 }
+
+            
             }
         }
 
@@ -68,6 +77,9 @@ int run_dog (const std::string &s)
         pythia.stat();
         cout << "[i] Done." << endl;
 
+        norm1->Scale(((pythia.info.sigmaGen()/(norm1->Integral())) * pythia.info.sigmaGen()));
+        //norm2->Scale(pythia.info.sigmaGen() / (norm2->Integral() * pythia.info.weightSum()));
+        norm2->Scale( (norm2->GetEntries()*pythia.info.sigmaGen()) / (norm2->Integral()* pythia.info.weightSum()));
         // remember to properly save/update and close the output file
         fout->Write();
         fout->Close();
