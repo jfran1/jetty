@@ -33,11 +33,10 @@ int run_josh (const std::string &s)
         TFile *fout = TFile::Open(outfname.c_str(), "RECREATE");
         fout->cd();
 
-        TH2F *eta2pT = new TH2F("eta2pT", "eta vs. pT;pT (Final State); eta", 100, 0, 25, 800, -3, 3);
+        
 
-        TH1F *etaLowpT = new TH1F("etaLowpT", "; eta;counts", 100,-3,3);
-        TH1F *etaMedpT = new TH1F("etaMedpT", " ; eta;counts", 100,-3,3);
-        TH1F *etaHighpT = new TH1F("etaHighpT", " ; eta;counts", 100,-3,3);
+        TH1F *partNorm = new TH1F("partNorm", "Outgoing Partons; p_{T} [GeV]; d#sigma/dp_{T} [mb] ", 500,0,500);
+        TH1F *final = new TH1F("final", "Finals State Particles; p_{T} [GeV]; d#sigma/dp_{T} [mb] ", 500,0,500);
 
         // initialize pythia with a config and command line args
         Pythia8::Pythia *ppythia = PyUtil::make_pythia(args.asString());
@@ -55,19 +54,18 @@ int run_josh (const std::string &s)
             pbar.Update();
             if (pythia.next() == false) continue;
 
+            if (std::abs(event[5].eta()) < 3) partNorm->Fill(event[5].pT());
+            else if (std::abs(event[6].eta()) < 3) partNorm->Fill(event[6].pT());
+
             //loop over particles in the event
             for (unsigned int ip = 0; ip < event.size(); ip++)//looping over particles
             {  
 
                 //Filter for |eta| < 3 and final state particles
-                if ((std::abs(event[ip].eta()) < 3) && (event[ip].status() > 0))  
+                if ((std::abs(event[ip].eta()) < 3) && (event[ip].isFinal()));  
                 {
-                    eta2pT->Fill(event[ip].pT(), event[ip].eta());
-
-                    if (std::abs(event[ip].pT()) <= 5 && std::abs(event[ip].pT()) >= 0) etaLowpT->Fill(event[ip].eta());
-                    else if (std::abs(event[ip].pT()) <= 15 && std::abs(event[ip].pT()) >= 10) etaMedpT->Fill(event[ip].eta());
-                    else if (std::abs(event[ip].pT()) <= 25 && std::abs(event[ip].pT()) >= 20) etaHighpT->Fill(event[ip].eta());
-                 }
+                    final->Fill(event[ip].pT());
+                }
 
 
             }
@@ -77,6 +75,11 @@ int run_josh (const std::string &s)
 
         pythia.stat();
         cout << "[i] Done." << endl;
+
+        partNorm->Sumw2();
+        final->Sumw2();
+        partNorm->Scale(pythia.info.sigmaGen()/(partNorm->GetBinWidth(1)*pythia.info.weightSum()));
+        final->Scale(pythia.info.sigmaGen()/(final->GetBinWidth(1)*pythia.info.weightSum()));
 
         // remember to properly save/update and close the output file
         fout->Write();
