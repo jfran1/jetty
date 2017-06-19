@@ -2,6 +2,7 @@ set(SOURCES_LIB
 	run_josh.cxx
 	run_cal.cxx
 	run_dog.cxx
+	run_Alice.cxx
 )
 
 set(MODULE ${PROJECT_NAME}Josh)
