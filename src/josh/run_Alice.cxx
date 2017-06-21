@@ -43,7 +43,7 @@ int run_Alice (const std::string &s)
         TH1F *hpT = new TH1F("hpT", ";p_{T}; 1/(2#pip_{T})(d^{2}#sigma)/(d#etadp_{T})(mb Gev^{-2} c^{2})", 50, 0, 100);
         TH2F *eta2pT = new TH2F("eta2pT", " ;p_{T}; #eta", 50,0,100,50,-.8,.8);
         TH1F *data = new TH1F("data", "", 5, 0, 5);
-
+         TH1F *hpTRaw = new TH1F("hpTRaw", ";p_{T}; Counts", 50, 0, 100);
 
         // initialize pythia with a config and command line args
         Pythia8::Pythia *ppythia = PyUtil::make_pythia(args.asString());
@@ -71,6 +71,7 @@ int run_Alice (const std::string &s)
                 {
                     hpT->Fill(event[ip].pT());
                     eta2pT->Fill(event[ip].pT(),event[ip].eta());
+                    hpTRaw->Fill(event[ip].pT());
                 }
 
 
@@ -94,7 +95,6 @@ int run_Alice (const std::string &s)
         cout << "The weightSum used is: " << wSum << endl;
         cout << "The binWidth used is: " << binWidth << endl;
 
-        TH1F *fillOnly = (TH1F*)hpT->Clone("hpTRaw");
         hpT->Sumw2();
         hpT->Scale( vSigma/
                     (binWidth*2*dEta*wSum*2*TMath::Pi()) );
