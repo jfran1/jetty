@@ -40,7 +40,7 @@ int run_Alice (const std::string &s)
         double dEta = 0.8;
 
 
-        TH1F *hpT = new TH1F("hpT", ";p_{T}; 1/(2#pip_{T})(d^{2}#sigma)/(d#etadp_{T})(mb Gev^{-2} c^{2})", 50, 0, 100);
+        TH1F *hpT = new TH1F("hpT", ";p_{T} [GeV]; 1/(2#pip_{T})(d^{2}#sigma)/(d#etadp_{T})(mb Gev^{-2} c^{2})", 50, 0, 100);
         TH2F *eta2pT = new TH2F("eta2pT", " ;p_{T}; #eta", 50,0,100,50,-.8,.8);
         TH1F *data = new TH1F("data", "", 5, 0, 5);
          TH1F *hpTRaw = new TH1F("hpTRaw", ";p_{T}; Counts", 50, 0, 100);
