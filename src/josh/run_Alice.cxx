@@ -1,20 +1,15 @@
 #include "run_Alice.h"
-
 #include <util/pyargs.h>
 #include <util/pyutil.h>
 #include <util/looputil.h>
-
 #include <Pythia8/Pythia.h>
-
 #include <TFile.h>
 #include <TH1F.h>
 #include <TH2F.h>
 #include <TF1.h>
 #include <TVector.h>
-
 #include <string>
 #include <iostream>
-
 #include <cmath> // std::abs
 #include <TMath.h>
 
@@ -33,17 +28,15 @@ int run_Alice (const std::string &s)
         {
             outfname = "default_output.root";
         }
+      
         TFile *fout = TFile::Open(outfname.c_str(), "RECREATE");
         fout->cd();
 
-        // set pi 
         double dEta = 0.8;
-
-
-        TH1F *hpT = new TH1F("hpT", ";p_{T} [GeV]; 1/(2#pip_{T})(d^{2}#sigma)/(d#etadp_{T})(mb Gev^{-2} c^{2})", 50, 0, 100);
+        TH1F *hpT = new TH1F("hpT", ";p_{T} [GeV]; 1/(2#pip_{T})(d^{2}#sigma)/(d#etadp_{T})(mb Gev^{-2} c^{2})", 150, 0, 30);
         TH2F *eta2pT = new TH2F("eta2pT", " ;p_{T}; #eta", 50,0,100,50,-.8,.8);
         TH1F *data = new TH1F("data", "", 5, 0, 5);
-         TH1F *hpTRaw = new TH1F("hpTRaw", ";p_{T}; Counts", 50, 0, 100);
+        TH1F *hpTRaw = new TH1F("hpTRaw", "hpTRaw;p_{T}; Counts", 150, 0, 30);
 
         // initialize pythia with a config and command line args
         Pythia8::Pythia *ppythia = PyUtil::make_pythia(args.asString());
@@ -67,25 +60,21 @@ int run_Alice (const std::string &s)
 
 
                 //Filter for |eta|, final state particles, and pT > 0.15 GeV
-                if ((std::abs(event[ip].eta()) < dEta) && (event[ip].isFinal()) && (event[ip].isCharged()) && (event[ip].pT()>0.15));  
+                if ((std::fabs(event[ip].eta()) < dEta) && (event[ip].isFinal()) && (event[ip].isCharged()) && (event[ip].pT()>0.15))  
                 {
                     hpT->Fill(event[ip].pT());
                     eta2pT->Fill(event[ip].pT(),event[ip].eta());
                     hpTRaw->Fill(event[ip].pT());
                 }
-
-
             }
-
         }
-
 
         pythia.stat();
         cout << "[i] Done." << endl;
 
         double vSigma = pythia.info.sigmaGen();
         double wSum = pythia.info.weightSum();
-        double binWidth = hpT->GetBinWidth(1);
+        double binWidth = hpTRaw->GetBinWidth(1);
 
         data->SetBinContent(1, vSigma);
         data->SetBinContent(2, wSum);
@@ -96,14 +85,15 @@ int run_Alice (const std::string &s)
         cout << "The binWidth used is: " << binWidth << endl;
 
         hpT->Sumw2();
+
         hpT->Scale( vSigma/
                     (binWidth*2*dEta*wSum*2*TMath::Pi()) );
                      
-
         TF1 *fun = new TF1("fun","[0]+[1]*x",0,100);
         fun->SetParameter(0, 0);
         fun->SetParameter(1,1);
         hpT->Divide(fun);
+        hpTRaw->Divide(fun);
 
         // remember to properly save/update and close the output file
         fout->Write();
