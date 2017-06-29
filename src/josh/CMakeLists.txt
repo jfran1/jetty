@@ -3,6 +3,8 @@ set(SOURCES_LIB
 	run_cal.cxx
 	run_dog.cxx
 	run_Alice.cxx
+	run_fastjet.cxx
+	run_chargedHadron.cxx
 )
 
 set(MODULE ${PROJECT_NAME}Josh)

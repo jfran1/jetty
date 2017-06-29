@@ -3,6 +3,8 @@
 #include "run_cal.h"
 #include "run_dog.h"
 #include "run_Alice.h"
+#include "run_fastjet.h"
+#include "run_chargedHadron.h"
 
 int main ( int argc, char *argv[] )
 {
@@ -29,6 +31,17 @@ int main ( int argc, char *argv[] )
     {
         rv = run_Alice(args.asString());
     }
+
+    if (args.isSet("--fastjet"))
+    {
+        rv = run_fastjet(args.asString());
+    }
+
+        if (args.isSet("--chargedHadron"))
+    {
+        rv = run_chargedHadron(args.asString());
+    }
+
 
     return rv;
 }
