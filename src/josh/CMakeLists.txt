@@ -5,6 +5,7 @@ set(SOURCES_LIB
 	run_Alice.cxx
 	run_fastjet.cxx
 	run_chargedHadron.cxx
+	run_gamma.cxx
 )
 
 set(MODULE ${PROJECT_NAME}Josh)

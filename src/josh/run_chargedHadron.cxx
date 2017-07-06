@@ -36,10 +36,13 @@ int run_chargedHadron (const std::string &s)
         TH1F *hpT = new TH1F("hpT", "p_{T} Distribution;p_{T} (GeV/#it{c});counts", 50, 0, 100);
         TH1F *hpTFilter = new TH1F("hpTFilter", "p_{T} Distribution;p_{T} (GeV/#it{c});counts", 50, 0, 100);
         TH1F *norm = new TH1F("norm", " ", 2, 0,2);
-        TH1F *jetCuts = new TH1F("jetpT", "p_{T} Distribution; p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
-        TH1F *jetNoFilter = new TH1F("jetNoFilter", "p_{T} Distribution; p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
-        TH1F *jetFilter = new TH1F("jetFilter", "p_{T} Distribution; p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
-
+        TH1F *jetNoFilter = new TH1F("jetNoFilter", "p_{T} Distribution; Jet p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
+        TH1F *jetFilter = new TH1F("jetFilter", "p_{T} Distribution; Jet p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
+        TH1F *jetCuts = new TH1F("jetCuts", "p_{T} Distribution; Jet p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
+        TH1F *gammapT = new TH1F("gammapT", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150); 
+        TH1F *gammapTCut = new TH1F("gammapTCut", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150);                
+        TH1F *gammaJet = new TH1F("gammaJet","p_{T} Distribution; #gamma Jet p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
+        TH1F *gammaEtaJet = new TH1F("gammaEtaJet","p_{T} Distribution; #gamma Jet p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
 
         // initialize pythia with a config and command line args
         Pythia8::Pythia *ppythia = PyUtil::make_pythia(args.asString());
@@ -57,9 +60,11 @@ int run_chargedHadron (const std::string &s)
             pbar.Update();
             if (pythia.next() == false) continue;
 
-            vector<fastjet::PseudoJet> input_particles1; // no filter
+            vector<fastjet::PseudoJet> input_particles1; // final charged hadrons
             vector<fastjet::PseudoJet> input_particles2; // charged hardons           
             vector<fastjet::PseudoJet> input_particles3; // all particles
+            vector<fastjet::PseudoJet> input_particlesGamma; // all gamma
+            vector<fastjet::PseudoJet> input_particlesGammaEta; // eta cut gamma
 
             // loop over particles in the event
             for (unsigned int ip = 0; ip < event.size(); ip++)
@@ -67,12 +72,24 @@ int run_chargedHadron (const std::string &s)
 
                 input_particles3.push_back(fastjet::PseudoJet(event[ip].px(), event[ip].py(), event[ip].pz(), event[ip].e()));
 
+                if (event[ip].id() == 22 && event[ip].isFinal())
+                {
+                    gammapT->Fill(event[ip].pT());
+                    input_particlesGamma.push_back(fastjet::PseudoJet(event[ip].px(),event[ip].py(),event[ip].pz(),event[ip].e()));
+
+                    if (std::abs(event[ip].eta()) < 2 && event[ip].mother2() == 0 && event[ip].mother1() != 111) // making sure mother is not a pion
+                    {
+                        gammapTCut->Fill(event[ip].pT());
+                        input_particlesGammaEta.push_back(fastjet::PseudoJet(event[ip].px(),event[ip].py(),event[ip].pz(),event[ip].e()));
+                    }
+
+                }
                 if (event[ip].isFinal() && event[ip].isHadron() && event[ip].isCharged() )
                 {
                     hpT->Fill(event[ip].pT());
                     input_particles1.push_back(fastjet::PseudoJet(event[ip].px(),event[ip].py(),event[ip].pz(),event[ip].e()));
 
-                    if (event[ip].pT() > 20 && std::abs(event[ip].eta()) < 2 )
+                    if (std::abs(event[ip].eta()) < 2 )
                     {
                         hpTFilter->Fill(event[ip].pT());
                         input_particles2.push_back(fastjet::PseudoJet(event[ip].px(),event[ip].py(),event[ip].pz(),event[ip].e()));
@@ -92,9 +109,25 @@ int run_chargedHadron (const std::string &s)
             fastjet::ClusterSequence clust_seq3(input_particles3, jet_def); // run cluster with jet definition on, no filter                        
             vector<fastjet::PseudoJet> inclusive_jets3 = sorted_by_pt(clust_seq3.inclusive_jets()); // sort jets
 
+            fastjet::ClusterSequence clust_seqGamma(input_particlesGamma, jet_def); // run cluster with jet definition on,                        
+            vector<fastjet::PseudoJet> inclusive_jetsGamma = sorted_by_pt(clust_seqGamma.inclusive_jets()); // sort jets
+
+            fastjet::ClusterSequence clust_seqGammaEta(input_particlesGammaEta, jet_def); // run cluster with jet definition on,                         
+            vector<fastjet::PseudoJet> inclusive_jetsGammaEta = sorted_by_pt(clust_seqGammaEta.inclusive_jets()); // sort jets
+
+            for(unsigned int i = 0; i < inclusive_jetsGamma.size(); i++)
+            {
+                gammaJet->Fill(inclusive_jetsGamma[i].pt());
+            }
+
+            for(unsigned int i = 0; i < inclusive_jetsGammaEta.size(); i++)
+            {
+                gammaEtaJet->Fill(inclusive_jetsGammaEta[i].pt());
+            }
+            
+
             for(unsigned int i = 0; i < inclusive_jets3.size(); i++)
             {
-
                 jetNoFilter->Fill(inclusive_jets3[i].pt());
             }
 

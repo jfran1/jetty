@@ -5,6 +5,7 @@
 #include "run_Alice.h"
 #include "run_fastjet.h"
 #include "run_chargedHadron.h"
+#include "run_gamma.h"
 
 int main ( int argc, char *argv[] )
 {
@@ -41,6 +42,12 @@ int main ( int argc, char *argv[] )
     {
         rv = run_chargedHadron(args.asString());
     }
+
+        if (args.isSet("--gamma"))
+    {
+        rv = run_gamma(args.asString());
+    }
+
 
 
     return rv;
