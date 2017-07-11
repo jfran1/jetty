@@ -6,6 +6,8 @@ set(SOURCES_LIB
 	run_fastjet.cxx
 	run_chargedHadron.cxx
 	run_gamma.cxx
+	run_cms.cxx
+	run_jetGamma.cxx
 )
 
 set(MODULE ${PROJECT_NAME}Josh)

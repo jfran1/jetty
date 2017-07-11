@@ -33,7 +33,8 @@ int run_gamma (const std::string &s)
         TFile *fout = TFile::Open(outfname.c_str(), "RECREATE");
         fout->cd();
 
-        TH1F *gammaPrompt = new TH1F("gammaPrompt", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150); 
+        TH1F *gammaPrompt = new TH1F("gammaPrompt", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
+        TH1F *gammaPrompt_test = new TH1F("gammaPrompt_test", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150); 
         TH1F *gammaSoft = new TH1F("gammaSoft", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
         TH1F *gammaJet_Prompt = new TH1F("gammaJet_Prompt", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
         TH1F *gammaJet_Soft = new TH1F("gammaJet_Soft", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
@@ -57,7 +58,15 @@ int run_gamma (const std::string &s)
 
             vector<fastjet::PseudoJet> input_particles_Prompt; 
             vector<fastjet::PseudoJet> input_particles_Soft; 
- 
+            
+            if( event[5].id() == 22 )
+            {
+                gammaPrompt_test->Fill(event[5].pT() );
+            }
+            if (event[6].id() ==22)
+            {
+                gammaPrompt_test->Fill(event[6].pT() );
+            }
 
             // loop over particles in the event
             for (unsigned int ip = 0; ip < event.size(); ip++) 
