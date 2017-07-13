@@ -33,9 +33,9 @@ int run_cms (const std::string &s)
         TFile *fout = TFile::Open(outfname.c_str(), "RECREATE");
         fout->cd();
 
-        TH1F *gammaPrompt = new TH1F("gammaPrompt", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 20, 0, 1000);
-        TH1F *decayGamma = new TH1F("decayGamma", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 20, 0, 1000);
-        TH1F *jet = new TH1F("jet", "p_{T} Distribution; jet p_{T} [GeV/#it{C}]; counts", 20, 0, 1000);
+        TH1F *gammaPrompt = new TH1F("gammaPrompt", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
+        TH1F *decayGamma = new TH1F("decayGamma", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
+        TH1F *jet = new TH1F("jet", "p_{T} Distribution; jet p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
         TH1F *norm = new TH1F("norm", " ", 3, 0,3);
 
         // initialize pythia with a config and command line args
@@ -60,11 +60,15 @@ int run_cms (const std::string &s)
             for (unsigned int ip = 0; ip < event.size(); ip++) 
             {
                 
-                // This vecotr will only make sense if run with prompt photon on or else will collect all types of jets
-                input_particles.push_back(fastjet::PseudoJet(event[ip].px(),event[ip].py(),event[ip].pz(),event[ip].e()));
+                
                 
                 if(event[ip].isFinal() && event[ip].id() == 22 && std::abs(event[ip].eta()) < 1.37 )
                 {
+                    if(event[ip].isFinal())
+                    {
+                        // This vecotr will only make sense if run with prompt photon on or else will collect all types of jets
+                        input_particles.push_back(fastjet::PseudoJet(event[ip].px(),event[ip].py(),event[ip].pz(),event[ip].e()));
+                    }
                     if(event[ip].status() != 91)
                     {
                         gammaPrompt->Fill(event[ip].pT());
@@ -80,7 +84,7 @@ int run_cms (const std::string &s)
             fastjet::JetDefinition jet_def(fastjet::antikt_algorithm, R);
 
             fastjet::ClusterSequence clust_seq(input_particles, jet_def);
-            vector<fastjet::PseudoJet> inclusive_jets = sorted_by_pt(clust_seq.inclusive_jets());
+            vector<fastjet::PseudoJet> inclusive_jets = sorted_by_pt(clust_seq.inclusive_jets(.15));
 
             for(int i =0; i < inclusive_jets.size(); i++ )
             {
