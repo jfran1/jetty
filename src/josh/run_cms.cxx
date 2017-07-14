@@ -37,6 +37,7 @@ int run_cms (const std::string &s)
         TH1F *decayGamma = new TH1F("decayGamma", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
         TH1F *jet = new TH1F("jet", "p_{T} Distribution; jet p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
         TH1F *norm = new TH1F("norm", " ", 3, 0,3);
+        TH1F *pi0 = new TH1F("pi0", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
 
         // initialize pythia with a config and command line args
         Pythia8::Pythia *ppythia = PyUtil::make_pythia(args.asString());
@@ -60,15 +61,20 @@ int run_cms (const std::string &s)
             for (unsigned int ip = 0; ip < event.size(); ip++) 
             {
                 
-                
+                if (event[ip].id() == 111)
+                {
+                    pi0->Fill(event[ip].pT());
+                    if (event[ip].status() != -91 && event[ip].status() != -83 && event[ip].status() != -84 )
+                    {
+                        cout << "[i] Pi0 status: " << event[ip].status() << endl;
+                    }
+                }
                 
                 if(event[ip].isFinal() && event[ip].id() == 22 && std::abs(event[ip].eta()) < 1.37 )
                 {
-                    if(event[ip].isFinal())
-                    {
-                        // This vecotr will only make sense if run with prompt photon on or else will collect all types of jets
-                        input_particles.push_back(fastjet::PseudoJet(event[ip].px(),event[ip].py(),event[ip].pz(),event[ip].e()));
-                    }
+                    // This vecotr will only make sense if run with prompt photon on or else will collect all types of jets
+                    input_particles.push_back(fastjet::PseudoJet(event[ip].px(),event[ip].py(),event[ip].pz(),event[ip].e()));
+                    
                     if(event[ip].status() != 91)
                     {
                         gammaPrompt->Fill(event[ip].pT());
@@ -96,9 +102,6 @@ int run_cms (const std::string &s)
         norm->SetBinContent(1, pythia.info.sigmaGen());
         norm->SetBinContent(2, pythia.info.weightSum());
 
-        event.list();
-
-        pythia.stat();
         cout << "[i] Generation done." << endl;
 
         // remember to properly save/update and close the output file
