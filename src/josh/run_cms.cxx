@@ -30,6 +30,12 @@ int run_cms (const std::string &s)
         {
             outfname = "default_output.root";
         }
+        
+        TFile *f1 = TFile::Open("/global/homes/j/jfran/test/output/cms_charged_hadron_data.root");
+        f1->cd("Table 4");
+        TH1F *charged_hadron = (TH1F*)gDirectory->Get("Hist1D_y1");
+        charged_hadron->Reset();
+
         TFile *fout = TFile::Open(outfname.c_str(), "RECREATE");
         fout->cd();
 
@@ -61,15 +67,16 @@ int run_cms (const std::string &s)
             for (unsigned int ip = 0; ip < event.size(); ip++) 
             {
                 
-                if (event[ip].id() == 111)
+                if (event[ip].id() == 111 && event[ip].status() == -91)
                 {
                     pi0->Fill(event[ip].pT());
-                    if (event[ip].status() != -91 && event[ip].status() != -83 && event[ip].status() != -84 )
-                    {
-                        cout << "[i] Pi0 status: " << event[ip].status() << endl;
-                    }
                 }
                 
+                if(event[ip].isFinal() && event[ip].isHadron() && event[ip].isCharged() && std::abs(event[ip].eta()) < 2.4) 
+                {
+                    charged_hadron ->Fill(event[ip].pT(), 1./event[ip].pT() );
+                }
+
                 if(event[ip].isFinal() && event[ip].id() == 22 && std::abs(event[ip].eta()) < 1.37 )
                 {
                     // This vecotr will only make sense if run with prompt photon on or else will collect all types of jets
@@ -106,6 +113,7 @@ int run_cms (const std::string &s)
 
         // remember to properly save/update and close the output file
         fout->Write();
+        charged_hadron->Write("charged_hadron");
         fout->Close();
         delete fout;
 

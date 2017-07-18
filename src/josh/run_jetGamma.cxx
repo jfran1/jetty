@@ -39,11 +39,13 @@ int run_jetGamma (const std::string &s)
         TH1F *gamma_decay = new TH1F("gamma_decay", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 50, 0, 400);
         TH1F *delta_phi = new TH1F("delta_phi", "#Delta #phi; #Delta #phi (Rad); counts", 100, -TMath::Pi(), TMath::Pi());
         TH1F *delta_phi2 = new TH1F("delta_phi2", "#Delta #phi; #Delta #phi (Rad); counts", 100, -TMath::Pi(), TMath::Pi());
-        TH2F *dJet_pT = new TH2F("dJet_pT", "; #gamma p_{T} GeV; #Delta p_{T}", 75,0, 150, 500, -100, 100);
         TH2F *dphi_pT = new TH2F("dphi_pT", ";#Delta #phi; p_{T}", 100,-TMath::Pi(), TMath::Pi(), 50, 0, 100);
+        TH2F *dJet_pT = new TH2F("dJet_pT", "; #gamma p_{T} GeV; #Delta p_{T}", 75,0, 150, 500, -100, 100);
         TH2F *dJet_pT_max = new TH2F("dJet_pT_max", "; #gamma p_{T} GeV; #Delta p_{T}", 75,0, 150, 500, -100, 100);
         TH1F *norm = new TH1F("norm", " ", 3, 0,3);
         TNtuple *jet_space_pT = new TNtuple("jet_space_pT", "Jet","dphi:delta_pt:gamma_pt:jet_phi");
+
+        TH1F *test_hist = new TH1F("test_hist", "Test; #Delta p_{T}; counts", 500, -100, 100);
 
         // initialize pythia with a config and command line args
         Pythia8::Pythia *ppythia = PyUtil::make_pythia(args.asString());
@@ -87,7 +89,7 @@ int run_jetGamma (const std::string &s)
                 }
             } // end partilce loop
 
-            double R = 0.4;
+            double R = 0.6;
             fastjet::JetDefinition jet_def(fastjet::antikt_algorithm, R);
 
             fastjet::ClusterSequence clust_seq(input_particles, jet_def);
@@ -127,8 +129,16 @@ int run_jetGamma (const std::string &s)
                 double gamma_pt = input_particles_gamma[i].pt();
                 double jet_phi = inclusive_jets[location].phi();
 
-                dJet_pT_max->Fill(input_particles_gamma[i].pt(), dpT);   // Fill 2D histogram with Delta pT Max - Gamma pT
-                jet_space_pT->Fill( dphi, dpT, gamma_pt, jet_phi);
+                if(inclusive_jets[i].eta() < (2.0 - R) )
+                {
+                    dJet_pT_max->Fill(gamma_pt, dpT);                    // Fill 2D histogram with Delta pT Max and Gamma pT
+                    jet_space_pT->Fill( dphi, dpT, gamma_pt, jet_phi);   // Fill tuple
+
+                    if(gamma_pt > 20 && gamma_pt < 40)
+                    {
+                        test_hist -> Fill(dpT);
+                    }
+                }
             }
 
 
