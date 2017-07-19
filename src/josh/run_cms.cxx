@@ -32,7 +32,7 @@ int run_cms (const std::string &s)
         }
         
         TFile *f1 = TFile::Open("/global/homes/j/jfran/test/output/cms_charged_hadron_data.root");
-        f1->cd("Table 4");
+        f1->cd("Table 5");
         TH1F *charged_hadron = (TH1F*)gDirectory->Get("Hist1D_y1");
         charged_hadron->Reset();
 
@@ -43,7 +43,7 @@ int run_cms (const std::string &s)
         TH1F *decayGamma = new TH1F("decayGamma", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
         TH1F *jet = new TH1F("jet", "p_{T} Distribution; jet p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
         TH1F *norm = new TH1F("norm", " ", 3, 0,3);
-        TH1F *pi0 = new TH1F("pi0", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
+        TH1F *pi0 = (TH1F*)charged_hadron->Clone("pi0");
 
         // initialize pythia with a config and command line args
         Pythia8::Pythia *ppythia = PyUtil::make_pythia(args.asString());
@@ -67,12 +67,12 @@ int run_cms (const std::string &s)
             for (unsigned int ip = 0; ip < event.size(); ip++) 
             {
                 
-                if (event[ip].id() == 111 && event[ip].status() == -91)
+                if (event[ip].id() == 111)
                 {
                     pi0->Fill(event[ip].pT());
                 }
                 
-                if(event[ip].isFinal() && event[ip].isHadron() && event[ip].isCharged() && std::abs(event[ip].eta()) < 2.4) 
+                if(event[ip].isFinal() && event[ip].isCharged() && std::abs(event[ip].eta()) < 1.) 
                 {
                     charged_hadron ->Fill(event[ip].pT(), 1./event[ip].pT() );
                 }

@@ -30,14 +30,15 @@ int run_gamma (const std::string &s)
         {
             outfname = "default_output.root";
         }
+        
+        TFile *f1 = TFile::Open("/global/homes/j/jfran/test/output/atlas_data.root");
+        f1->cd("Table 1");
+        TH1F *gamma_prompt = (TH1F*)gDirectory->Get("Hist1D_y1");
+        gamma_prompt->Reset();
+
         TFile *fout = TFile::Open(outfname.c_str(), "RECREATE");
         fout->cd();
 
-        TH1F *gammaPrompt = new TH1F("gammaPrompt", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
-        TH1F *gammaPrompt_test = new TH1F("gammaPrompt_test", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150); 
-        TH1F *gammaSoft = new TH1F("gammaSoft", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
-        TH1F *gammaJet_Prompt = new TH1F("gammaJet_Prompt", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
-        TH1F *gammaJet_Soft = new TH1F("gammaJet_Soft", "p_{T} Distribution; #gamma p_{T} [GeV/#it{C}]; counts", 75, 0, 150);
         TH1F *norm = new TH1F("norm", " ", 3, 0,3);
 
         // initialize pythia with a config and command line args
@@ -49,73 +50,23 @@ int run_gamma (const std::string &s)
         auto nEv = args.getI("Main:numberOfEvents");
         LoopUtil::TPbar pbar(nEv);
 
-        
-
         for (unsigned int iE = 0; iE < nEv; iE++)//loopin over events  (pp collision)
         {
             pbar.Update();
             if (pythia.next() == false) continue;
 
-            vector<fastjet::PseudoJet> input_particles_Prompt; 
-            vector<fastjet::PseudoJet> input_particles_Soft; 
-            
-            if( event[5].id() == 22 )
-            {
-                gammaPrompt_test->Fill(event[5].pT() );
-            }
-            if (event[6].id() ==22)
-            {
-                gammaPrompt_test->Fill(event[6].pT() );
-            }
-
             // loop over particles in the event
             for (unsigned int ip = 0; ip < event.size(); ip++) 
             {
-                if(event[ip].isFinal() && event[ip].id() == 22 && std::abs(event[ip].eta()) < 2 )
+                if(event[ip].isFinal() && event[ip].id() == 22 && std::abs(event[ip].eta()) < 1.37 )
                 {
                     if(std::abs(event[ip].status()) != 91)
                     {
-                        gammaPrompt->Fill(event[ip].pT());
-                        input_particles_Prompt.push_back(fastjet::PseudoJet(event[ip].px(), event[ip].py(), event[ip].pz(), event[ip].e()));
-                    }
-
-                    if(std::abs(event[ip].status()) == 91)
-                    {
-                        gammaSoft->Fill(event[ip].pT() );
-                        input_particles_Soft.push_back(fastjet::PseudoJet(event[ip].px(), event[ip].py(), event[ip].pz(), event[ip].e()));   
+                        gamma_prompt->Fill(event[ip].pT());
                     }
                 }
 
             }
-         
-
-            // run Jet Algorith per event
-            double R = 0.4;
-            fastjet::JetDefinition jet_def(fastjet::antikt_algorithm, R); // define jet
-
-            fastjet::ClusterSequence clust_seq_Prompt(input_particles_Prompt, jet_def); // run cluster with jet definition on, hadron filter
-            vector<fastjet::PseudoJet> inclusive_jets_Prompt = sorted_by_pt(clust_seq_Prompt.inclusive_jets()); // sort jets
-
-            fastjet::ClusterSequence clust_seq_Soft(input_particles_Soft, jet_def); // run cluster with jet definition on, cuts                        
-            vector<fastjet::PseudoJet> inclusive_jets_Soft = sorted_by_pt(clust_seq_Soft.inclusive_jets()); // sort jets
-
-
-            for(unsigned int i = 0; i < inclusive_jets_Prompt.size(); i++)
-            {
-                if(std::abs(inclusive_jets_Prompt[i].eta() < 1.5) )
-                {    
-                    gammaJet_Prompt->Fill(inclusive_jets_Prompt[i].pt());
-                }
-            }
-
-            for(unsigned int i = 0; i < inclusive_jets_Soft.size(); i++)
-            {
-                if(std::abs(inclusive_jets_Soft[i].eta() < 1.5) )
-                {    
-                    gammaJet_Soft->Fill(inclusive_jets_Soft[i].pt());
-                }
-            }
-
         }
 
         norm->SetBinContent(1, pythia.info.sigmaGen());
