@@ -35,6 +35,7 @@ int run_cms (const std::string &s)
         f1->cd("Table 5");
         TH1F *charged_hadron = (TH1F*)gDirectory->Get("Hist1D_y1");
         charged_hadron->Reset();
+        charged_hadron->Sumw2();
 
         TFile *fout = TFile::Open(outfname.c_str(), "RECREATE");
         fout->cd();

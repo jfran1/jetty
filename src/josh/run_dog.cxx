@@ -1,26 +1,22 @@
 #include "run_dog.h"
-
 #include <util/pyargs.h>
 #include <util/pyutil.h>
 #include <util/looputil.h>
-
 #include <Pythia8/Pythia.h>
 #include </global/homes/j/jfran/test/pythia8226/include/Pythia8/SigmaTotal.h>
-
 #include <TFile.h>
 #include <TH1F.h>
 #include <TH2F.h>
-
 #include <string>
 #include <iostream>
-
-#include <cmath> // std::abs
+#include <cmath>
+#include "TNtuple.h"
+#include "Sample_Pythia.h"
 
 using namespace std;
 
 int run_dog (const std::string &s)
 { 
-		
 		// test(s); return;
         PyUtil::Args args(s);
         cout << args.asString("[pythia_run_wrapper:status]") << endl;
@@ -36,10 +32,9 @@ int run_dog (const std::string &s)
         fout->cd();
 
         TH1F *hpT = new TH1F("hpT", "p_{T} Final state;p_{T} [GeV] ; Counts", 50, 0, 220);
-        
-        
         TH1F *norm1 = new TH1F("norm1", "norm pT; p_{T}; d#sigma/dp_{T} )", 30, 0, 60);
-        //TH1F *norm2 = new TH1F("norm2", "norm pT; p_{T}; )", 20, 0, 100);
+        TNtuple *raw_entries = new TNtuple("raw_entries", "raw data", "pT;phi;eta");
+        TNtuple *scaled_entries = new TNtuple("scaled_entries", "scaled data", "pT;phi;eta");
     
         // initialize pythia with a config and command line args
         Pythia8::Pythia *ppythia = PyUtil::make_pythia(args.asString());
@@ -50,7 +45,14 @@ int run_dog (const std::string &s)
         auto nEv = args.getI("Main:numberOfEvents");
         LoopUtil::TPbar pbar(nEv);
 
-        
+
+        Sample_Pythia sample;
+
+        std::cout << "[i] Sigma right now is: " << sample.get_sigma() << std::endl;
+        std::cout << "[i] Sigma error       :" << sample.get_error() << std::endl;
+
+        sample.set_sigma(s , nEv);
+        std::cout << "[i] Now sigma is: " << sample.get_sigma() << std::endl; 
 
         for (unsigned int iE = 0; iE < nEv; iE++)//loopin over events  (pp collision)
         {
@@ -62,12 +64,9 @@ int run_dog (const std::string &s)
             {  
                 //cout << "Cross section: " << pythia.info.sigmaGen() << endl;
                 //Filter for |eta| < 3 and outgoing partons
-                if ((std::abs(event[ip].eta()) < 3) && event[ip].isFinal())  
+                if ((std::abs(event[ip].eta()) < 3) && event[ip].isFinal() && event[ip].isHadron())  
                 {
-
-                    //hpT->Fill(event[ip].pT());
-                    norm1->Fill(event[ip].pT()); 
-                    //norm2->Fill(event[ip].pT());
+                    raw_entries->Fill(event[ip].pT(), event[ip].phi(), event[ip].eta());   
                 }
 
             

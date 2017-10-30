@@ -8,6 +8,7 @@ set(SOURCES_LIB
 	run_gamma.cxx
 	run_cms.cxx
 	run_jetGamma.cxx
+	Sample_Pythia.cxx
 )
 
 set(MODULE ${PROJECT_NAME}Josh)

@@ -11,6 +11,7 @@
 #include <cmath> 
 #include "fastjet/ClusterSequence.hh"
 #include <cstdio>
+#include <TNtuple.h>
 using namespace fastjet;
 using namespace std;
 
@@ -31,12 +32,9 @@ int run_fastjet (const std::string &s)
     fout->cd();
 
 
-    TH1F *hpT = new TH1F("hpT", "p_{T} of Jets; p_{T} [GeV]; Counts", 25,0,100);
-    TH1F *rap = new TH1F("rap", "Rapidity of Jets; y; counts", 50, -10, 10);
-    TH1F *phi = new TH1F("phi", "Azmuth of Jets; phi [rad]; coutns", 100, 0, 10);
-    TH1F *hE = new TH1F("hE","Energy of Jets; E [GeV]; counts", 25000, 0, 25000);
-    TH1F *data= new TH1F("data", "data for pT", 4, 0, 4);
-    TH2F *hat2inel = new TH2F("hat2inel", " ;p_{T} [GeV];#sigma_{#hat{p_{T}}} / #sigma_{inel}", 50, 0,  200, 15, 0 ,1);
+    TH1F *jet_pt = new TH1F("jet_pt" , "charged jet; p_{T} GeV; counts", 50, 15,100);
+    TH1F *norm = new TH1F("norm", "things to normalize", 3, 0, 3);
+    TNtuple *jet = new TNtuple("jet", "charged Jet", "pt:eta:phi");
 
     // initialize pythia with a config and command line args
     Pythia8::Pythia *ppythia = PyUtil::make_pythia(args.asString());
@@ -75,18 +73,14 @@ int run_fastjet (const std::string &s)
         // get the resulting jets ordered in pt
         //----------------------------------------------------------
         double ptmin = 0.15;
-        vector<fastjet::PseudoJet> inclusive_jets = sorted_by_pt(clust_seq.inclusive_jets());
+        vector<fastjet::PseudoJet> inclusive_jets = sorted_by_pt(clust_seq.inclusive_jets(ptmin));
 
-        double inelSig = 71.3922;
         for (unsigned int i = 0; i < inclusive_jets.size(); i++)
         {
             if ( std::abs(inclusive_jets[i].eta()) < 0.5)
             { 
-                hpT->Fill(inclusive_jets[i].pt());
-                rap->Fill(inclusive_jets[i].rap());
-                phi->Fill(inclusive_jets[i].phi());
-                hE->Fill(inclusive_jets[i].e());
-                hat2inel->Fill(inclusive_jets[i].pt(),pythia.info.sigmaGen()/inelSig);
+                jet_pt->Fill(inclusive_jets[i].pt());
+                jet->Fill(inclusive_jets[i].pt(), inclusive_jets[i].eta(), inclusive_jets[i].phi());
             }
         }
     }
@@ -94,8 +88,9 @@ int run_fastjet (const std::string &s)
     pythia.stat();
     cout << "[i] Generation done." << endl;
 
-    data->SetBinContent(1, pythia.info.sigmaGen());
-    data->SetBinContent(2, pythia.info.weightSum());
+    jet->SetWeight(pythia.info.sigmaGen());
+    norm->SetBinContent(1, pythia.info.sigmaGen());
+    norm->SetBinContent(2, pythia.info.weightSum());
 
     // remember to properly save/update and close the output file
     fout->Write();
